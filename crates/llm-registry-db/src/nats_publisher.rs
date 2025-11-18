@@ -79,6 +79,7 @@ impl NatsPublisherConfig {
 #[derive(Clone)]
 pub struct NatsEventPublisher {
     client: Client,
+    #[allow(dead_code)]
     config: NatsPublisherConfig,
 }
 

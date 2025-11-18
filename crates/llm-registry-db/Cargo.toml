@@ -71,3 +71,7 @@ dotenvy = { workspace = true }
 default = ["postgres"]
 postgres = []
 sqlite = ["sqlx/sqlite"]
+
+# Include migrations in the package
+[package.metadata.docs.rs]
+all-features = true

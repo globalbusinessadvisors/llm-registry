@@ -192,7 +192,7 @@ pub async fn create_pool(config: &PoolConfig) -> DbResult<PgPool> {
 pub async fn run_migrations(pool: &PgPool) -> DbResult<()> {
     info!("Running database migrations");
 
-    sqlx::migrate!("../../migrations")
+    sqlx::migrate!("./migrations")
         .run(pool)
         .await
         .map_err(|e| DbError::Migration(format!("Migration failed: {}", e)))?;

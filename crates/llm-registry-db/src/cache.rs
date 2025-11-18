@@ -4,7 +4,7 @@
 //! performance for frequently accessed data like assets and search results.
 
 use llm_registry_core::{Asset, AssetId};
-use redis::{aio::ConnectionManager, AsyncCommands, Client, RedisError};
+use redis::{aio::ConnectionManager, AsyncCommands, Client};
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use tracing::{debug, error, info, warn};
@@ -168,7 +168,7 @@ impl RedisCache {
 
         let mut conn = self.connection.clone();
 
-        conn.set_ex(key, data, ttl.as_secs())
+        conn.set_ex::<_, _, ()>(key, data, ttl.as_secs())
             .await
             .map_err(|e| {
                 error!("Cache SET error for key {}: {}", key, e);
@@ -184,7 +184,7 @@ impl RedisCache {
 
         let mut conn = self.connection.clone();
 
-        conn.del(key)
+        conn.del::<_, ()>(key)
             .await
             .map_err(|e| {
                 error!("Cache DELETE error for key {}: {}", key, e);
@@ -221,7 +221,7 @@ impl RedisCache {
 
         // Delete all matching keys
         let count = keys.len();
-        conn.del(&keys)
+        conn.del::<_, ()>(&keys)
             .await
             .map_err(|e| DbError::Cache(format!("Failed to delete keys: {}", e)))?;
 
