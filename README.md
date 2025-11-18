@@ -2,6 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
+[![Crates.io](https://img.shields.io/crates/v/llm-registry-core.svg)](https://crates.io/crates/llm-registry-core)
+[![npm SDK](https://img.shields.io/npm/v/@llm-dev-ops/llm-registry-sdk.svg)](https://www.npmjs.com/package/@llm-dev-ops/llm-registry-sdk)
+[![npm CLI](https://img.shields.io/npm/v/@llm-dev-ops/llm-registry.svg)](https://www.npmjs.com/package/@llm-dev-ops/llm-registry)
 
 Enterprise-grade registry for managing Large Language Model (LLM) assets, pipelines, datasets, policies, and test suites with comprehensive version control, dependency tracking, and compliance management.
 
@@ -59,6 +62,109 @@ Enterprise-grade registry for managing Large Language Model (LLM) assets, pipeli
 - **Message Queue**: NATS 2.10+
 - **Observability**: OpenTelemetry, Prometheus, Jaeger
 
+## Installation
+
+### NPM Packages (TypeScript/JavaScript)
+
+#### SDK (API Client)
+
+Install the TypeScript SDK for programmatic access to the LLM Registry:
+
+```bash
+npm install @llm-dev-ops/llm-registry-sdk
+```
+
+**Usage:**
+```typescript
+import { LLMRegistryClient } from '@llm-dev-ops/llm-registry-sdk';
+
+const client = new LLMRegistryClient({
+  baseURL: 'http://localhost:8080',
+  apiToken: 'your-api-token'
+});
+
+// List models
+const models = await client.listModels();
+
+// Create a model
+const model = await client.createModel({
+  name: 'my-model',
+  version: '1.0.0',
+  provider: 'openai'
+});
+```
+
+#### CLI Tool
+
+Install the command-line interface globally:
+
+```bash
+npm install -g @llm-dev-ops/llm-registry
+```
+
+**Usage:**
+```bash
+# Configure the CLI
+llm-registry config --url http://localhost:8080
+
+# List models
+llm-registry models list
+
+# Create a model
+llm-registry models create --name my-model --version 1.0.0
+
+# Upload an asset
+llm-registry assets upload <model-id> ./model.safetensors \
+  --name weights --version 1.0.0
+```
+
+See the [CLI documentation](packages/cli/README.md) for more commands.
+
+### Rust Crates (crates.io)
+
+Add the LLM Registry crates to your `Cargo.toml`:
+
+```toml
+[dependencies]
+# Core domain types
+llm-registry-core = "0.1.0"
+
+# Database layer with migrations
+llm-registry-db = "0.1.0"
+
+# Business logic and service layer
+llm-registry-service = "0.1.0"
+
+# REST API layer
+llm-registry-api = "0.1.0"
+
+# Complete server binary
+llm-registry-server = "0.1.0"
+```
+
+**Usage:**
+```rust
+use llm_registry_core::{Model, Asset};
+use llm_registry_service::ModelService;
+
+// Use the service layer in your application
+let service = ModelService::new(db_pool);
+let models = service.list_models(filters).await?;
+```
+
+### Server Binary
+
+Install the server binary directly from crates.io:
+
+```bash
+cargo install llm-registry-server
+```
+
+Then run:
+```bash
+llm-registry-server
+```
+
 ## Quick Start
 
 ### Prerequisites
@@ -74,7 +180,7 @@ Enterprise-grade registry for managing Large Language Model (LLM) assets, pipeli
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/your-org/llm-registry.git
+git clone https://github.com/globalbusinessadvisors/llm-registry.git
 cd llm-registry
 ```
 
@@ -430,11 +536,25 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - 📝 **[Code of Conduct](CODE_OF_CONDUCT.md)** - Community guidelines
 - 📊 **[Changelog](CHANGELOG.md)** - Version history and changes
 
+## Package Registry
+
+### NPM Packages
+
+- **SDK**: [@llm-dev-ops/llm-registry-sdk](https://www.npmjs.com/package/@llm-dev-ops/llm-registry-sdk)
+- **CLI**: [@llm-dev-ops/llm-registry](https://www.npmjs.com/package/@llm-dev-ops/llm-registry)
+
+### Rust Crates
+
+- **Core**: [llm-registry-core](https://crates.io/crates/llm-registry-core)
+- **Database**: [llm-registry-db](https://crates.io/crates/llm-registry-db)
+- **Service**: [llm-registry-service](https://crates.io/crates/llm-registry-service)
+- **API**: [llm-registry-api](https://crates.io/crates/llm-registry-api)
+- **Server**: [llm-registry-server](https://crates.io/crates/llm-registry-server)
+
 ## Support
 
-- Issues: [GitHub Issues](https://github.com/llm-devops/llm-registry/issues)
-- Discussions: [GitHub Discussions](https://github.com/llm-devops/llm-registry/discussions)
-- Email: support@llm-registry.dev
+- Issues: [GitHub Issues](https://github.com/globalbusinessadvisors/llm-registry/issues)
+- Discussions: [GitHub Discussions](https://github.com/globalbusinessadvisors/llm-registry/discussions)
 
 ## Acknowledgments
 
