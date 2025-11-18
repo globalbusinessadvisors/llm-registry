@@ -1,4 +1,21 @@
 {
+  "name": "llm-registry-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "clean": "npm run clean --workspaces",
+    "test": "npm run test --workspaces",
+    "publish:sdk": "cd packages/sdk && npm publish",
+    "publish:cli": "cd packages/cli && npm publish",
+    "publish:all": "npm run publish:sdk && npm run publish:cli"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
   "dependencies": {
     "claude-flow": "^2.7.31"
   }

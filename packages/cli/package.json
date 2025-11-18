@@ -1,0 +1,54 @@
+{
+  "name": "@llm-dev-ops/llm-registry",
+  "version": "0.1.0",
+  "description": "Command-line interface for the LLM Registry - A secure, production-ready registry for Large Language Models",
+  "main": "dist/index.js",
+  "bin": {
+    "llm-registry": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "jest"
+  },
+  "keywords": [
+    "llm",
+    "registry",
+    "ai",
+    "ml",
+    "models",
+    "cli",
+    "command-line"
+  ],
+  "author": "Global Business Advisors",
+  "license": "Apache-2.0 OR MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/globalbusinessadvisors/llm-registry.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/globalbusinessadvisors/llm-registry#readme",
+  "bugs": {
+    "url": "https://github.com/globalbusinessadvisors/llm-registry/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@llm-dev-ops/llm-registry-sdk": "^0.1.0",
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "table": "^6.8.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
