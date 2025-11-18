@@ -1,0 +1,68 @@
+[package]
+name = "llm-registry-db"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Core dependency on domain types
+llm-registry-core = { path = "../llm-registry-core" }
+
+# Async runtime and utilities
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+
+# Database access with compile-time verification
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "macros", "chrono", "uuid", "json", "migrate"] }
+
+# Connection pooling
+deadpool = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Date/time handling
+chrono = { workspace = true }
+
+# ID generation
+ulid = { workspace = true }
+uuid = { workspace = true }
+
+# Semantic versioning
+semver = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Tracing and logging
+tracing = { workspace = true }
+
+# Event streaming
+async-nats = { workspace = true }
+
+# Caching
+redis = { workspace = true }
+
+# URL handling
+url = { workspace = true }
+
+[dev-dependencies]
+# Testing utilities
+tokio = { workspace = true, features = ["test-util", "macros"] }
+testcontainers = { workspace = true }
+wiremock = { workspace = true }
+mockall = { workspace = true }
+
+# Environment configuration for tests
+dotenvy = { workspace = true }
+
+[features]
+default = ["postgres"]
+postgres = []
+sqlite = ["sqlx/sqlite"]

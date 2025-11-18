@@ -1,0 +1,469 @@
+syntax = "proto3";
+
+package llm.registry.v1;
+
+// LLM Registry Service
+//
+// Enterprise-grade gRPC API for managing LLM assets, models, datasets,
+// pipelines, and their dependencies with full lifecycle management.
+service RegistryService {
+  // Asset Management
+
+  /// Register a new asset in the registry
+  rpc RegisterAsset(RegisterAssetRequest) returns (RegisterAssetResponse);
+
+  /// Get an asset by ID
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+
+  /// Search and list assets with filtering and pagination
+  rpc SearchAssets(SearchAssetsRequest) returns (SearchAssetsResponse);
+
+  /// Update an existing asset's metadata
+  rpc UpdateAsset(UpdateAssetRequest) returns (UpdateAssetResponse);
+
+  /// Delete an asset from the registry
+  rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
+
+  // Dependency Management
+
+  /// Get the dependency graph for an asset
+  rpc GetDependencies(GetDependenciesRequest) returns (GetDependenciesResponse);
+
+  /// Get all assets that depend on this asset (reverse dependencies)
+  rpc GetDependents(GetDependentsRequest) returns (GetDependentsResponse);
+
+  // Metadata Operations
+
+  /// Get all unique tags across all assets
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+
+  /// Get registry statistics and health
+  rpc GetHealth(HealthRequest) returns (HealthResponse);
+
+  /// Get API version information
+  rpc GetVersion(VersionRequest) returns (VersionResponse);
+
+  // Streaming Operations
+
+  /// Stream asset updates (server streaming)
+  rpc WatchAssets(WatchAssetsRequest) returns (stream AssetEvent);
+
+  /// Batch register multiple assets (client streaming)
+  rpc BatchRegister(stream RegisterAssetRequest) returns (BatchRegisterResponse);
+}
+
+// ============================================================================
+// Message Types
+// ============================================================================
+
+// Asset Types
+enum AssetType {
+  ASSET_TYPE_UNSPECIFIED = 0;
+  ASSET_TYPE_MODEL = 1;
+  ASSET_TYPE_PIPELINE = 2;
+  ASSET_TYPE_TEST_SUITE = 3;
+  ASSET_TYPE_POLICY = 4;
+  ASSET_TYPE_DATASET = 5;
+}
+
+// Asset Status
+enum AssetStatus {
+  ASSET_STATUS_UNSPECIFIED = 0;
+  ASSET_STATUS_ACTIVE = 1;
+  ASSET_STATUS_DEPRECATED = 2;
+  ASSET_STATUS_ARCHIVED = 3;
+  ASSET_STATUS_NON_COMPLIANT = 4;
+}
+
+// Storage Backend Types
+enum StorageBackend {
+  STORAGE_BACKEND_UNSPECIFIED = 0;
+  STORAGE_BACKEND_S3 = 1;
+  STORAGE_BACKEND_GCS = 2;
+  STORAGE_BACKEND_AZURE_BLOB = 3;
+  STORAGE_BACKEND_MINIO = 4;
+  STORAGE_BACKEND_FILESYSTEM = 5;
+}
+
+// Hash Algorithm
+enum HashAlgorithm {
+  HASH_ALGORITHM_UNSPECIFIED = 0;
+  HASH_ALGORITHM_SHA256 = 1;
+  HASH_ALGORITHM_SHA3_256 = 2;
+  HASH_ALGORITHM_BLAKE3 = 3;
+}
+
+// Sort Field
+enum SortField {
+  SORT_FIELD_UNSPECIFIED = 0;
+  SORT_FIELD_CREATED_AT = 1;
+  SORT_FIELD_UPDATED_AT = 2;
+  SORT_FIELD_NAME = 3;
+  SORT_FIELD_VERSION = 4;
+  SORT_FIELD_SIZE_BYTES = 5;
+}
+
+// Sort Order
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASCENDING = 1;
+  SORT_ORDER_DESCENDING = 2;
+}
+
+// Asset representation
+message Asset {
+  // Unique asset identifier (ULID)
+  string id = 1;
+
+  // Asset type
+  AssetType asset_type = 2;
+
+  // Asset metadata
+  AssetMetadata metadata = 3;
+
+  // Storage information
+  StorageLocation storage = 4;
+
+  // Checksum for integrity verification
+  Checksum checksum = 5;
+
+  // Current status
+  AssetStatus status = 6;
+
+  // Provenance information
+  optional Provenance provenance = 7;
+
+  // List of asset dependencies
+  repeated AssetReference dependencies = 8;
+
+  // Timestamps
+  string created_at = 9;  // RFC3339 format
+  string updated_at = 10; // RFC3339 format
+  optional string deprecated_at = 11; // RFC3339 format
+}
+
+// Asset metadata
+message AssetMetadata {
+  // Asset name
+  string name = 1;
+
+  // Semantic version
+  string version = 2;
+
+  // Optional description
+  optional string description = 3;
+
+  // Optional license identifier
+  optional string license = 4;
+
+  // Tags for categorization
+  repeated string tags = 5;
+
+  // Key-value annotations
+  map<string, string> annotations = 6;
+
+  // File size in bytes
+  optional uint64 size_bytes = 7;
+
+  // Content type / MIME type
+  optional string content_type = 8;
+}
+
+// Storage location
+message StorageLocation {
+  // Storage backend type
+  StorageBackend backend = 1;
+
+  // Path or key within the backend
+  string path = 2;
+
+  // Optional URI representation
+  optional string uri = 3;
+
+  // Backend-specific configuration
+  optional StorageConfig config = 4;
+}
+
+// Storage configuration for different backends
+message StorageConfig {
+  oneof config {
+    S3Config s3 = 1;
+    GCSConfig gcs = 2;
+    AzureBlobConfig azure = 3;
+    MinIOConfig minio = 4;
+    FileSystemConfig filesystem = 5;
+  }
+}
+
+message S3Config {
+  string bucket = 1;
+  string region = 2;
+  optional string endpoint = 3;
+}
+
+message GCSConfig {
+  string bucket = 1;
+  string project_id = 2;
+}
+
+message AzureBlobConfig {
+  string account_name = 1;
+  string container = 2;
+}
+
+message MinIOConfig {
+  string bucket = 1;
+  string endpoint = 2;
+}
+
+message FileSystemConfig {
+  string base_path = 1;
+}
+
+// Checksum information
+message Checksum {
+  // Hash algorithm used
+  HashAlgorithm algorithm = 1;
+
+  // Hexadecimal checksum value
+  string value = 2;
+}
+
+// Provenance information
+message Provenance {
+  // Original source of the asset
+  optional string source = 1;
+
+  // Author or creator
+  optional string author = 2;
+
+  // Build or creation timestamp
+  optional string created = 3;
+
+  // Additional metadata
+  map<string, string> metadata = 4;
+}
+
+// Asset reference (for dependencies)
+message AssetReference {
+  oneof reference {
+    // Reference by ID
+    string id = 1;
+
+    // Reference by name and version
+    NameVersion name_version = 2;
+  }
+}
+
+message NameVersion {
+  string name = 1;
+  string version = 2;
+}
+
+// Dependency node in dependency graph
+message DependencyNode {
+  // Asset ID
+  string asset_id = 1;
+
+  // Asset name
+  string name = 2;
+
+  // Asset version
+  string version = 3;
+
+  // Depth from root (0 = direct dependency)
+  int32 depth = 4;
+
+  // Number of dependencies this node has
+  uint32 dependency_count = 5;
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+// Register Asset
+message RegisterAssetRequest {
+  AssetType asset_type = 1;
+  string name = 2;
+  string version = 3;
+  optional string description = 4;
+  optional string license = 5;
+  repeated string tags = 6;
+  map<string, string> annotations = 7;
+  StorageLocation storage = 8;
+  Checksum checksum = 9;
+  optional Provenance provenance = 10;
+  repeated AssetReference dependencies = 11;
+  optional uint64 size_bytes = 12;
+  optional string content_type = 13;
+}
+
+message RegisterAssetResponse {
+  Asset asset = 1;
+  repeated string warnings = 2;
+}
+
+// Get Asset
+message GetAssetRequest {
+  string id = 1;
+}
+
+message GetAssetResponse {
+  optional Asset asset = 1;
+}
+
+// Search Assets
+message SearchAssetsRequest {
+  // Text search query
+  optional string text = 1;
+
+  // Filter by asset types
+  repeated AssetType asset_types = 2;
+
+  // Filter by tags (must have all)
+  repeated string tags = 3;
+
+  // Filter by author
+  optional string author = 4;
+
+  // Filter by storage backend
+  optional string storage_backend = 5;
+
+  // Exclude deprecated assets
+  bool exclude_deprecated = 6;
+
+  // Pagination
+  int64 limit = 7;
+  int64 offset = 8;
+
+  // Sorting
+  SortField sort_by = 9;
+  SortOrder sort_order = 10;
+}
+
+message SearchAssetsResponse {
+  // Matching assets
+  repeated Asset assets = 1;
+
+  // Total count (without pagination)
+  int64 total = 2;
+
+  // Current offset
+  int64 offset = 3;
+
+  // Current limit
+  int64 limit = 4;
+
+  // Whether there are more results
+  bool has_more = 5;
+}
+
+// Update Asset
+message UpdateAssetRequest {
+  // Asset ID to update
+  string asset_id = 1;
+
+  // Fields to update (optional)
+  optional AssetStatus status = 2;
+  optional string description = 3;
+  optional string license = 4;
+
+  // Tags to add
+  repeated string add_tags = 5;
+
+  // Tags to remove
+  repeated string remove_tags = 6;
+
+  // Annotations to add/update
+  map<string, string> add_annotations = 7;
+
+  // Annotation keys to remove
+  repeated string remove_annotations = 8;
+}
+
+message UpdateAssetResponse {
+  Asset asset = 1;
+  repeated string updated_fields = 2;
+}
+
+// Delete Asset
+message DeleteAssetRequest {
+  string asset_id = 1;
+}
+
+message DeleteAssetResponse {
+  string asset_id = 1;
+  string message = 2;
+}
+
+// Get Dependencies
+message GetDependenciesRequest {
+  string asset_id = 1;
+  int32 max_depth = 2; // -1 for unlimited
+}
+
+message GetDependenciesResponse {
+  repeated DependencyNode dependencies = 1;
+}
+
+// Get Dependents
+message GetDependentsRequest {
+  string asset_id = 1;
+}
+
+message GetDependentsResponse {
+  repeated Asset dependents = 1;
+}
+
+// List Tags
+message ListTagsRequest {}
+
+message ListTagsResponse {
+  repeated string tags = 1;
+}
+
+// Health Check
+message HealthRequest {}
+
+message HealthResponse {
+  bool healthy = 1;
+  string version = 2;
+  optional string message = 3;
+}
+
+// Version
+message VersionRequest {}
+
+message VersionResponse {
+  string version = 1;
+  string build_date = 2;
+  string git_commit = 3;
+}
+
+// Watch Assets (streaming)
+message WatchAssetsRequest {
+  // Optional filters
+  repeated AssetType asset_types = 1;
+  repeated string tags = 2;
+}
+
+message AssetEvent {
+  enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_CREATED = 1;
+    EVENT_TYPE_UPDATED = 2;
+    EVENT_TYPE_DELETED = 3;
+  }
+
+  EventType event_type = 1;
+  Asset asset = 2;
+  string timestamp = 3; // RFC3339 format
+}
+
+// Batch Register (streaming)
+message BatchRegisterResponse {
+  uint32 total_registered = 1;
+  uint32 total_failed = 2;
+  repeated string error_messages = 3;
+}

@@ -1,0 +1,36 @@
+# Development environment configuration
+# This file overrides default.toml for local development
+
+[server]
+# Use localhost for development
+host = "127.0.0.1"
+port = 3000
+
+# Shorter timeout for development
+timeout_seconds = 60
+
+[database]
+# Local development database
+url = "postgresql://postgres:postgres@localhost:5432/llm_registry_dev"
+
+# Smaller pool for development
+max_connections = 5
+min_connections = 1
+
+# Always run migrations in development
+run_migrations = true
+
+[logging]
+# Verbose logging for development
+level = "debug"
+
+# Pretty formatting for development
+json_format = false
+
+# Show target module for debugging
+include_target = true
+
+[cors]
+# Allow all origins in development
+allowed_origins = []
+allow_credentials = true

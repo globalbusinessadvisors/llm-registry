@@ -1,0 +1,582 @@
+# ============================================================================
+# LLM Registry Helm Chart - Default Values
+#
+# This file contains default configuration values for the LLM Registry.
+# Override these values using:
+#   helm install llm-registry ./helm/llm-registry -f custom-values.yaml
+# ============================================================================
+
+# -----------------------------------------------------------------------------
+# Global Configuration
+# -----------------------------------------------------------------------------
+global:
+  # Image registry to use for all images
+  imageRegistry: ""
+
+  # Image pull secrets
+  imagePullSecrets: []
+
+  # Storage class for persistent volumes
+  storageClass: ""
+
+# -----------------------------------------------------------------------------
+# Application Configuration
+# -----------------------------------------------------------------------------
+image:
+  registry: docker.io
+  repository: llm-registry/llm-registry-server
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Number of replicas
+replicaCount: 2
+
+# Deployment strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# -----------------------------------------------------------------------------
+# Service Configuration
+# -----------------------------------------------------------------------------
+service:
+  # Service type
+  type: ClusterIP
+
+  # HTTP API port
+  http:
+    port: 3000
+    targetPort: 3000
+    nodePort: null
+
+  # gRPC API port
+  grpc:
+    enabled: true
+    port: 50051
+    targetPort: 50051
+    nodePort: null
+
+  # Annotations
+  annotations: {}
+
+  # Labels
+  labels: {}
+
+  # Session affinity
+  sessionAffinity: ClientIP
+
+# -----------------------------------------------------------------------------
+# Ingress Configuration
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+
+  hosts:
+    - host: llm-registry.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: http
+            port: 3000
+
+  tls:
+    - secretName: llm-registry-tls
+      hosts:
+        - llm-registry.example.com
+
+  # gRPC Ingress (separate from HTTP)
+  grpc:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - host: grpc.llm-registry.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: llm-registry-grpc-tls
+        hosts:
+          - grpc.llm-registry.example.com
+
+# -----------------------------------------------------------------------------
+# Resource Management
+# -----------------------------------------------------------------------------
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# Autoscaling
+# -----------------------------------------------------------------------------
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+
+  # Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 70
+
+  # Target memory utilization percentage
+  targetMemoryUtilizationPercentage: 80
+
+  # Behavior configuration
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+# -----------------------------------------------------------------------------
+# Pod Disruption Budget
+# -----------------------------------------------------------------------------
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# -----------------------------------------------------------------------------
+# Security Configuration
+# -----------------------------------------------------------------------------
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  fsGroupChangePolicy: "OnRootMismatch"
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Pod Security Standards
+podSecurityPolicy:
+  enabled: false
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Ingress rules
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nginx-ingress
+      ports:
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 50051
+
+  # Egress rules
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+# -----------------------------------------------------------------------------
+# Application Configuration
+# -----------------------------------------------------------------------------
+config:
+  # Environment
+  environment: production
+
+  # Log level (trace, debug, info, warn, error)
+  logLevel: info
+
+  # Enable JSON logging
+  jsonLogging: true
+
+  # Features
+  features:
+    grpc: true
+    graphql: true
+    metrics: true
+    tracing: true
+    caching: true
+
+  # Server configuration
+  server:
+    host: "0.0.0.0"
+    port: 3000
+    gracefulShutdownTimeout: 30
+
+  # gRPC configuration
+  grpc:
+    host: "0.0.0.0"
+    port: 50051
+
+  # Database configuration
+  database:
+    maxConnections: 20
+    minConnections: 5
+    connectTimeout: 30
+    idleTimeout: 600
+    maxLifetime: 1800
+
+  # Cache configuration
+  cache:
+    ttl: 3600
+    maxSize: 1000
+
+  # CORS configuration
+  cors:
+    allowedOrigins: []
+    allowCredentials: false
+    maxAge: 3600
+
+# -----------------------------------------------------------------------------
+# Secrets Configuration
+# -----------------------------------------------------------------------------
+secrets:
+  # Use existing secret
+  existingSecret: ""
+
+  # Or create new secret with these values
+  create: true
+
+  # Database credentials
+  database:
+    # If using external secret, specify key names
+    passwordKey: "database-password"
+    # Or provide value (not recommended for production)
+    password: ""
+
+  # JWT secret
+  jwt:
+    secretKey: "jwt-secret"
+    secret: ""
+
+  # API keys
+  apiKeys:
+    enabled: false
+    keys: []
+
+# -----------------------------------------------------------------------------
+# ConfigMap
+# -----------------------------------------------------------------------------
+configMap:
+  # Use existing configmap
+  existingConfigMap: ""
+
+  # Additional configuration files
+  data: {}
+
+# -----------------------------------------------------------------------------
+# Environment Variables
+# -----------------------------------------------------------------------------
+env:
+  - name: RUST_LOG
+    value: "info"
+  - name: RUST_BACKTRACE
+    value: "1"
+  - name: ENVIRONMENT
+    value: "production"
+
+# Additional environment variables from secrets/configmaps
+envFrom: []
+
+# -----------------------------------------------------------------------------
+# Volumes and Volume Mounts
+# -----------------------------------------------------------------------------
+volumes: []
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/cache
+
+# Extra volumes (e.g., for TLS certificates)
+extraVolumes: []
+extraVolumeMounts: []
+
+# -----------------------------------------------------------------------------
+# Health Checks
+# -----------------------------------------------------------------------------
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 30
+
+# -----------------------------------------------------------------------------
+# Service Account
+# -----------------------------------------------------------------------------
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: true
+
+# -----------------------------------------------------------------------------
+# RBAC
+# -----------------------------------------------------------------------------
+rbac:
+  create: true
+  rules: []
+
+# -----------------------------------------------------------------------------
+# Pod Annotations and Labels
+# -----------------------------------------------------------------------------
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+podLabels: {}
+
+# -----------------------------------------------------------------------------
+# Node Selection
+# -----------------------------------------------------------------------------
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - llm-registry
+          topologyKey: kubernetes.io/hostname
+
+# -----------------------------------------------------------------------------
+# Priority Class
+# -----------------------------------------------------------------------------
+priorityClassName: ""
+
+# -----------------------------------------------------------------------------
+# Monitoring and Observability
+# -----------------------------------------------------------------------------
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    annotations: {}
+
+prometheus:
+  enabled: false
+  # Use existing Prometheus installation
+
+grafana:
+  enabled: false
+  # Use existing Grafana installation
+  dashboards:
+    enabled: true
+    namespace: monitoring
+
+jaeger:
+  enabled: true
+  agent:
+    host: jaeger-agent
+    port: 6831
+  collector:
+    endpoint: http://jaeger-collector:14268
+
+# -----------------------------------------------------------------------------
+# Database (PostgreSQL)
+# -----------------------------------------------------------------------------
+postgresql:
+  enabled: true
+  auth:
+    username: llmreg
+    password: ""  # Set via secret
+    database: llm_registry
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 2000m
+  metrics:
+    enabled: true
+
+# External database (if postgresql.enabled=false)
+externalDatabase:
+  host: ""
+  port: 5432
+  username: llmreg
+  password: ""
+  database: llm_registry
+  sslMode: require
+
+# -----------------------------------------------------------------------------
+# Cache (Redis)
+# -----------------------------------------------------------------------------
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""  # Set via secret
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+  metrics:
+    enabled: true
+
+# External Redis (if redis.enabled=false)
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  database: 0
+
+# -----------------------------------------------------------------------------
+# Message Queue (NATS)
+# -----------------------------------------------------------------------------
+nats:
+  enabled: true
+  image:
+    repository: nats
+    tag: "2-alpine"
+  persistence:
+    enabled: true
+    size: 5Gi
+  jetstream:
+    enabled: true
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# External NATS (if nats.enabled=false)
+externalNats:
+  url: ""
+
+# -----------------------------------------------------------------------------
+# Additional Configuration
+# -----------------------------------------------------------------------------
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []
+
+# Lifecycle hooks
+lifecycle: {}
+
+# Extra objects to deploy
+extraDeploy: []
+
+# Tests
+tests:
+  enabled: true
+  image:
+    repository: busybox
+    tag: latest

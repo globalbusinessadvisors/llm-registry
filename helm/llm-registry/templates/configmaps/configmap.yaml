@@ -1,0 +1,41 @@
+{{- if not .Values.configMap.existingConfigMap -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "llm-registry.fullname" . }}
+  labels:
+    {{- include "llm-registry.labels" . | nindent 4 }}
+data:
+  # Server configuration
+  server.host: {{ .Values.config.server.host | quote }}
+  server.port: {{ .Values.config.server.port | quote }}
+  server.graceful_shutdown_timeout: {{ .Values.config.server.gracefulShutdownTimeout | quote }}
+
+  # gRPC configuration
+  grpc.enabled: {{ .Values.config.features.grpc | quote }}
+  grpc.host: {{ .Values.config.grpc.host | quote }}
+  grpc.port: {{ .Values.config.grpc.port | quote }}
+
+  # Logging configuration
+  log_level: {{ .Values.config.logLevel | quote }}
+  json_logging: {{ .Values.config.jsonLogging | quote }}
+
+  # Features
+  features.graphql: {{ .Values.config.features.graphql | quote }}
+  features.metrics: {{ .Values.config.features.metrics | quote }}
+  features.tracing: {{ .Values.config.features.tracing | quote }}
+  features.caching: {{ .Values.config.features.caching | quote }}
+
+  # Cache configuration
+  cache.ttl: {{ .Values.config.cache.ttl | quote }}
+  cache.max_size: {{ .Values.config.cache.maxSize | quote }}
+
+  # CORS configuration
+  cors.allowed_origins: {{ join "," .Values.config.cors.allowedOrigins | quote }}
+  cors.allow_credentials: {{ .Values.config.cors.allowCredentials | quote }}
+  cors.max_age: {{ .Values.config.cors.maxAge | quote }}
+
+  {{- with .Values.configMap.data }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}

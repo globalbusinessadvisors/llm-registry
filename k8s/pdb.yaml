@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: llm-registry
+  namespace: llm-registry
+  labels:
+    app.kubernetes.io/name: llm-registry
+    app.kubernetes.io/component: server
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llm-registry
+      app.kubernetes.io/component: server

@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "llm-registry.fullname" . }}
+  labels:
+    {{- include "llm-registry.labels" . | nindent 4 }}
+    app.kubernetes.io/component: http
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.service.http.port }}
+      targetPort: {{ .Values.service.http.targetPort }}
+      protocol: TCP
+      name: http
+      {{- if and (eq .Values.service.type "NodePort") .Values.service.http.nodePort }}
+      nodePort: {{ .Values.service.http.nodePort }}
+      {{- end }}
+    {{- if .Values.service.grpc.enabled }}
+    - port: {{ .Values.service.grpc.port }}
+      targetPort: {{ .Values.service.grpc.targetPort }}
+      protocol: TCP
+      name: grpc
+      {{- if and (eq .Values.service.type "NodePort") .Values.service.grpc.nodePort }}
+      nodePort: {{ .Values.service.grpc.nodePort }}
+      {{- end }}
+    {{- end }}
+  selector:
+    {{- include "llm-registry.selectorLabels" . | nindent 4 }}

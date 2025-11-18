@@ -1,0 +1,54 @@
+# Production environment configuration
+# This file overrides default.toml for production deployment
+
+[server]
+# Bind to all interfaces in production
+host = "0.0.0.0"
+port = 3000
+
+# Strict timeout for production
+timeout_seconds = 30
+
+# Enable graceful shutdown for zero-downtime deployments
+graceful_shutdown = true
+shutdown_timeout_seconds = 30
+
+[database]
+# Database URL should be set via DATABASE_URL environment variable
+# This is just a placeholder
+url = "postgresql://postgres:password@db:5432/llm_registry"
+
+# Production pool settings
+max_connections = 20
+min_connections = 5
+
+# Connection settings
+connect_timeout_seconds = 10
+idle_timeout_seconds = 300
+max_lifetime_seconds = 1800
+
+# Migrations should be handled separately in production
+run_migrations = false
+
+[logging]
+# Info level for production (avoid debug noise)
+level = "info"
+
+# JSON formatting for structured logging
+json_format = true
+
+# Production logging settings
+include_timestamps = true
+include_thread_ids = true
+include_target = false
+
+[cors]
+# Configure specific origins in production
+# Override with LLM_REGISTRY__CORS__ALLOWED_ORIGINS environment variable
+allowed_origins = []
+
+# Don't allow credentials by default
+allow_credentials = false
+
+# Cache preflight requests
+max_age_seconds = 86400

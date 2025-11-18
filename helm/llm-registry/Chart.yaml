@@ -1,0 +1,52 @@
+apiVersion: v2
+name: llm-registry
+description: Enterprise-grade LLM Asset Registry with REST and gRPC APIs
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.24.0-0"
+
+keywords:
+  - llm
+  - machine-learning
+  - registry
+  - asset-management
+  - grpc
+  - rest-api
+
+home: https://github.com/llm-devops/llm-registry
+sources:
+  - https://github.com/llm-devops/llm-registry
+
+maintainers:
+  - name: LLM DevOps Team
+    email: devops@llm-registry.dev
+
+icon: https://llm-registry.dev/icon.svg
+
+# Dependencies (optional - can use external charts)
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - database
+
+  - name: redis
+    version: "18.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+    tags:
+      - cache
+
+  - name: prometheus
+    version: "25.x.x"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: prometheus.enabled
+    tags:
+      - monitoring
+
+annotations:
+  category: Infrastructure
+  licenses: Apache-2.0 OR MIT

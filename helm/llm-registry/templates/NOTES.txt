@@ -1,0 +1,189 @@
+================================================================================
+  LLM Registry - Enterprise-grade LLM Asset Registry
+================================================================================
+
+Your LLM Registry deployment has been successfully installed!
+
+Release Name:   {{ .Release.Name }}
+Namespace:      {{ .Release.Namespace }}
+Chart Version:  {{ .Chart.Version }}
+App Version:    {{ .Chart.AppVersion }}
+
+================================================================================
+  ACCESSING THE REGISTRY
+================================================================================
+
+{{- if .Values.ingress.enabled }}
+HTTP API:
+  {{- range .Values.ingress.hosts }}
+  - https://{{ .host }}
+  {{- end }}
+
+{{- if and .Values.ingress.grpc.enabled .Values.service.grpc.enabled }}
+gRPC API:
+  {{- range .Values.ingress.grpc.hosts }}
+  - grpc://{{ .host }}:443
+  {{- end }}
+{{- end }}
+{{- else }}
+
+1. Get the application URL by running:
+
+{{- if eq .Values.service.type "NodePort" }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "llm-registry.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "HTTP API: http://$NODE_IP:$NODE_PORT"
+  {{- if .Values.service.grpc.enabled }}
+  export GRPC_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[1].nodePort}" services {{ include "llm-registry.fullname" . }})
+  echo "gRPC API: grpc://$NODE_IP:$GRPC_PORT"
+  {{- end }}
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: kubectl get svc -w {{ include "llm-registry.fullname" . }} -n {{ .Release.Namespace }}
+
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "llm-registry.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo "HTTP API: http://$SERVICE_IP:{{ .Values.service.http.port }}"
+  {{- if .Values.service.grpc.enabled }}
+  echo "gRPC API: grpc://$SERVICE_IP:{{ .Values.service.grpc.port }}"
+  {{- end }}
+
+{{- else if eq .Values.service.type "ClusterIP" }}
+  # Port-forward to access the service locally
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "llm-registry.fullname" . }} {{ .Values.service.http.port }}:{{ .Values.service.http.port }}
+
+  # In another terminal
+  echo "HTTP API: http://localhost:{{ .Values.service.http.port }}"
+
+  {{- if .Values.service.grpc.enabled }}
+  # For gRPC
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "llm-registry.fullname" . }} {{ .Values.service.grpc.port }}:{{ .Values.service.grpc.port }}
+  echo "gRPC API: grpc://localhost:{{ .Values.service.grpc.port }}"
+  {{- end }}
+{{- end }}
+{{- end }}
+
+================================================================================
+  MONITORING AND OBSERVABILITY
+================================================================================
+
+{{- if .Values.metrics.enabled }}
+Metrics are enabled and exposed at /metrics endpoint.
+
+{{- if .Values.metrics.serviceMonitor.enabled }}
+A Prometheus ServiceMonitor has been created in the {{ .Values.metrics.serviceMonitor.namespace }} namespace.
+{{- end }}
+{{- end }}
+
+{{- if .Values.grafana.dashboards.enabled }}
+Grafana dashboards are available in the {{ .Values.grafana.dashboards.namespace }} namespace.
+{{- end }}
+
+{{- if .Values.jaeger.enabled }}
+Distributed tracing is enabled with Jaeger:
+  Agent Host: {{ .Values.jaeger.agent.host }}:{{ .Values.jaeger.agent.port }}
+  Collector:  {{ .Values.jaeger.collector.endpoint }}
+{{- end }}
+
+================================================================================
+  HEALTH CHECK
+================================================================================
+
+Check the health of your deployment:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "llm-registry.name" . }}
+
+Wait for all pods to be Running and Ready.
+
+Test the health endpoint:
+{{- if .Values.ingress.enabled }}
+  {{- range .Values.ingress.hosts }}
+  curl https://{{ .host }}/health
+  {{- end }}
+{{- else }}
+  # Using port-forward
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "llm-registry.fullname" . }} {{ .Values.service.http.port }}:{{ .Values.service.http.port }}
+  curl http://localhost:{{ .Values.service.http.port }}/health
+{{- end }}
+
+================================================================================
+  CONFIGURATION
+================================================================================
+
+Database:
+  {{- if .Values.postgresql.enabled }}
+  - Using bundled PostgreSQL
+  - Database: {{ .Values.postgresql.auth.database }}
+  - Username: {{ .Values.postgresql.auth.username }}
+  {{- else }}
+  - Using external PostgreSQL
+  - Host: {{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}
+  - Database: {{ .Values.externalDatabase.database }}
+  {{- end }}
+
+Cache:
+  {{- if .Values.redis.enabled }}
+  - Using bundled Redis
+  {{- else if .Values.externalRedis.host }}
+  - Using external Redis at {{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}
+  {{- else }}
+  - Cache not configured
+  {{- end }}
+
+Scaling:
+  {{- if .Values.autoscaling.enabled }}
+  - HPA enabled (min: {{ .Values.autoscaling.minReplicas }}, max: {{ .Values.autoscaling.maxReplicas }})
+  - Target CPU: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
+  - Target Memory: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%
+  {{- else }}
+  - Fixed replicas: {{ .Values.replicaCount }}
+  {{- end }}
+
+================================================================================
+  USEFUL COMMANDS
+================================================================================
+
+View logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "llm-registry.name" . }} --tail=100 -f
+
+Get deployment status:
+  kubectl get deployment -n {{ .Release.Namespace }} {{ include "llm-registry.fullname" . }}
+
+View events:
+  kubectl get events -n {{ .Release.Namespace }} --sort-by='.lastTimestamp'
+
+Describe pod:
+  kubectl describe pod -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "llm-registry.name" . }}
+
+Execute shell in pod:
+  kubectl exec -it -n {{ .Release.Namespace }} $(kubectl get pod -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "llm-registry.name" . }} -o jsonpath='{.items[0].metadata.name}') -- /bin/sh
+
+================================================================================
+  NEXT STEPS
+================================================================================
+
+1. Verify all pods are running:
+   kubectl get pods -n {{ .Release.Namespace }}
+
+2. Check the health endpoint to ensure the API is responding
+
+3. Review the configuration in values.yaml and adjust as needed
+
+4. Set up monitoring alerts in Prometheus/Grafana
+
+5. Configure backups for PostgreSQL
+
+6. Review and update CORS settings for your domain
+
+7. Configure SSL/TLS certificates for production
+
+================================================================================
+  SUPPORT
+================================================================================
+
+Documentation: https://llm-registry.dev/docs
+GitHub:        https://github.com/llm-devops/llm-registry
+Issues:        https://github.com/llm-devops/llm-registry/issues
+
+Thank you for using LLM Registry!
+================================================================================

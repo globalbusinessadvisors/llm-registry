@@ -1,0 +1,140 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/llm-registry-core",
+    "crates/llm-registry-db",
+    "crates/llm-registry-service",
+    "crates/llm-registry-api",
+    "crates/llm-registry-server",
+]
+
+[package]
+name = "llm-registry-integration-tests"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+llm-registry-core = { path = "crates/llm-registry-core" }
+llm-registry-db = { path = "crates/llm-registry-db" }
+llm-registry-service = { path = "crates/llm-registry-service" }
+llm-registry-api = { path = "crates/llm-registry-api" }
+
+# Test dependencies
+tokio = { workspace = true }
+axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+sqlx = { workspace = true }
+rand = "0.8"
+chrono = { workspace = true }
+tower = { workspace = true }
+semver = { workspace = true }
+ulid = { workspace = true }
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75.0"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/llm-devops/llm-registry"
+authors = ["LLM DevOps Team"]
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# Web frameworks
+axum = { version = "0.7", features = ["macros", "multipart", "ws"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["full"] }
+hyper = "1.0"
+
+# gRPC
+tonic = { version = "0.11", features = ["gzip", "tls"] }
+prost = "0.12"
+prost-types = "0.12"
+
+# GraphQL
+async-graphql = { version = "7.0", features = ["dataloader", "chrono", "uuid"] }
+async-graphql-axum = "7.0"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "sqlite", "macros", "chrono", "uuid", "json", "migrate"] }
+deadpool = "0.10"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# IDs and versioning
+ulid = { version = "1.1", features = ["serde"] }
+semver = { version = "1.0", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Cryptography
+sha2 = "0.10"
+blake3 = "1.5"
+ed25519-dalek = { version = "2.0", features = ["serde"] }
+rustls = "0.22"
+ring = "0.17"
+
+# Authentication
+jsonwebtoken = "9.0"
+oauth2 = "4.4"
+
+# Search
+tantivy = "0.21"
+
+# Caching
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+moka = { version = "0.12", features = ["future"] }
+
+# Event streaming
+async-nats = "0.33"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "time"] }
+opentelemetry = { version = "0.21", features = ["trace", "metrics"] }
+opentelemetry-jaeger = "0.20"
+prometheus = "0.13"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+url = { version = "2.5", features = ["serde"] }
+regex = "1.10"
+clap = { version = "4.4", features = ["derive", "env"] }
+dotenvy = "0.15"
+config = "0.13"
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+# Testing
+mockall = "0.12"
+wiremock = "0.6"
+testcontainers = "0.15"
+criterion = "0.5"
+
+# Security
+secrecy = { version = "0.8", features = ["serde"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true

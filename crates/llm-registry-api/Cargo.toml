@@ -1,0 +1,68 @@
+[package]
+name = "llm-registry-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Internal crates
+llm-registry-core = { path = "../llm-registry-core" }
+llm-registry-service = { path = "../llm-registry-service" }
+
+# Web framework
+axum = { version = "0.8", features = ["macros"] }
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = ["fs", "trace", "cors", "compression-full", "request-id"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Error handling
+thiserror = "1.0"
+
+# HTTP types
+http = "1.0"
+http-body-util = "0.1"
+
+# UUID and time
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Versioning
+semver = { version = "1.0", features = ["serde"] }
+
+# JWT authentication
+jsonwebtoken = "9.2"
+
+# GraphQL
+async-graphql = { version = "7.0", features = ["chrono", "uuid"] }
+async-graphql-axum = "7.0"
+
+# gRPC
+tonic = { version = "0.11", features = ["gzip", "tls"] }
+prost = "0.12"
+prost-types = "0.12"
+
+# Metrics (optional)
+metrics = { version = "0.22", optional = true }
+metrics-exporter-prometheus = { version = "0.14", optional = true }
+
+[build-dependencies]
+tonic-build = "0.11"
+prost-build = "0.12"
+
+[features]
+default = []
+metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]

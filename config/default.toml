@@ -1,0 +1,63 @@
+# Default configuration for LLM Registry Server
+# This file contains sensible defaults for all environments
+
+[server]
+# Server host and port
+host = "0.0.0.0"
+port = 3000
+
+# Request timeout in seconds
+timeout_seconds = 30
+
+# Enable graceful shutdown
+graceful_shutdown = true
+
+# Graceful shutdown timeout in seconds
+shutdown_timeout_seconds = 30
+
+[database]
+# Database connection URL
+# Override with DATABASE_URL environment variable in production
+url = "postgresql://postgres:postgres@localhost:5432/llm_registry"
+
+# Connection pool settings
+max_connections = 10
+min_connections = 2
+
+# Connection timeout in seconds
+connect_timeout_seconds = 30
+
+# Idle connection timeout in seconds
+idle_timeout_seconds = 600
+
+# Maximum connection lifetime in seconds
+max_lifetime_seconds = 1800
+
+# Run migrations on startup
+run_migrations = true
+
+[logging]
+# Log level: trace, debug, info, warn, error
+level = "info"
+
+# Use JSON formatting (better for production)
+json_format = false
+
+# Include timestamps in logs
+include_timestamps = true
+
+# Include thread IDs in logs
+include_thread_ids = false
+
+# Include target module in logs
+include_target = true
+
+[cors]
+# Allowed origins (empty array means all origins are allowed)
+allowed_origins = []
+
+# Allow credentials (cookies, authorization headers)
+allow_credentials = false
+
+# Max age for preflight requests in seconds
+max_age_seconds = 3600
